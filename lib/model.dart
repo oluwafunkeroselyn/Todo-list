@@ -1,35 +1,45 @@
 class Todo {
-  final int userId;
-  final int id;
+  final int? userId;
+  final int? id;
   final String title;
   final bool isCompleted;
 
   Todo({
-    required this.userId,
-    required this.id,
+    this.userId,
+    this.id,
     required this.title,
     required this.isCompleted,
   });
 
-  factory Todo.fromJson(Map<String, dynamic> json) {
+  factory Todo.fromJson(Map<String, dynamic> json) => Todo(
+        userId: json['userId'] is int
+            ? json['userId']
+            : int.tryParse(json['userId']?.toString() ?? '') ?? 1,
+        id: json['id'] is int
+            ? json['id']
+            : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+        title: json['title'] ?? '',
+        isCompleted: json['completed'].toString() == 'true',
+      );
+
+  Map<String, dynamic> toJson() => {
+        'userId': userId ?? 1,
+        'id': id,
+        'title': title,
+        'completed': isCompleted,
+      };
+
+  Todo copyWith({
+    int? userId,
+    int? id,
+    String? title,
+    bool? isCompleted,
+  }) {
     return Todo(
-      userId: json['userId'] is int ? json['userId'] : int.tryParse(json['userId'].toString()) ?? 0,
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      title: json['title'] ?? '',
-      isCompleted: json['completed'] == true || json['completed'].toString().toLowerCase() == 'true',
+      userId: userId ?? this.userId,
+      id: id ?? this.id,
+      title: title ?? this.title,
+      isCompleted: isCompleted ?? this.isCompleted,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'id': id,
-      'title': title,
-      'completed': isCompleted,
-    };
-  }
-
-  @override
-  String toString() =>
-      'Todo{userId: $userId, id: $id, title: $title, isCompleted: $isCompleted}';
 }

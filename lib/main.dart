@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:to_do_app/app_route.dart';  // Make sure this file exports AppRoutes with your routes
+import 'app_route.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,7 +22,8 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
         ),
-        textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.black87)),
+        textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Colors.black87)),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
@@ -31,11 +32,12 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.teal.shade700,
           foregroundColor: Colors.white,
         ),
-        textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.white)),
+        textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Colors.white)),
       ),
       themeMode: ThemeMode.system,
-      initialRoute: AppRoutes.home,  // Your initial route, e.g. '/' or '/home'
-      getPages: AppRoutes.routes,    // Your registered pages/routes
+      initialRoute: AppRoutes.home,
+      getPages: AppRoutes.routes,
     );
   }
 }

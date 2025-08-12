@@ -1,53 +1,60 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:to_do_app/model.dart';
+import 'model.dart';
 
 class ApiServices {
-  final String baseUrl = 'https://6894f1d3be3700414e14fa08.mockapi.io/oluwafunkeroselyn';
+  static const String baseUrl = 'https://jsonplaceholder.typicode.com';
 
-  Future<List<Todo>> fetchTodos() async {
-    final response = await http.get(Uri.parse('$baseUrl/Todos'));
+  Future<List<Todo>> fetchTodos({int limit = 10}) async {
+    final response = await http.get(Uri.parse('$baseUrl/todos?_limit=$limit'));
     if (response.statusCode == 200) {
-      final List data = json.decode(response.body);
-      return data.map<Todo>((json) => Todo.fromJson(json)).toList();
+      final List list = jsonDecode(response.body);
+      return list.map((e) => Todo.fromJson(e)).toList();
     } else {
-      throw Exception('Failed to load Todos');
+      throw Exception('Failed to load todos');
     }
   }
 
   Future<Todo> createTodo(Todo todo) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/Todos'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(todo.toJson()),
+      Uri.parse('$baseUrl/todos'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      body: jsonEncode(todo.toJson()),
     );
 
     if (response.statusCode == 201) {
-      return Todo.fromJson(json.decode(response.body));
+      // API returns dummy data, so we just use our original todo
+      final data = jsonDecode(response.body);
+      return todo.copyWith(id: data['id'] ?? todo.id);
     } else {
-      throw Exception('Failed to create Todo');
+      throw Exception('Failed to create todo');
     }
   }
 
-  Future<Todo> updateTodo(String id, Todo todo) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/Todos/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(todo.toJson()),
+  Future<Todo> updateTodoStatusOnly(int id, bool isCompleted) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/todos/$id'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      body: jsonEncode({'completed': isCompleted}),
     );
 
     if (response.statusCode == 200) {
-      return Todo.fromJson(json.decode(response.body));
+      // Keep title unchanged, only update completion status
+      return Todo(
+        id: id,
+        title: '', // We'll replace it in controller
+        isCompleted: isCompleted,
+        userId: 1,
+      );
     } else {
-      throw Exception('Failed to update Todo');
+      throw Exception('Failed to update status');
     }
   }
 
-  Future<void> deleteTodo(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/Todos/$id'));
-
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Failed to delete Todo');
+  Future<void> deleteTodo(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/todos/$id'));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete todo');
     }
   }
 }

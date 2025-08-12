@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:to_do_app/controller.dart';
-import 'package:to_do_app/model.dart';
+import 'package:to_do_app/todo_controller.dart';
 
 class CreateTodo extends StatelessWidget {
   final TextEditingController titleController = TextEditingController();
@@ -12,9 +11,7 @@ class CreateTodo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Todo'),
-      ),
+      appBar: AppBar(title: const Text('Create Todo')),
       body: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
@@ -26,36 +23,31 @@ class CreateTodo extends StatelessWidget {
                 labelText: 'Title',
                 border: OutlineInputBorder(),
               ),
+              onChanged: (_) => controller.update(),
             ),
             const SizedBox(height: 20),
-            Obx(() => ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                minimumSize: const Size.fromHeight(45),
-              ),
-              icon: const Icon(Icons.save),
-              label: controller.isSaving.value
-                  ? const Text('Saving...')
-                  : const Text('Create Todo'),
-              onPressed: controller.isSaving.value
-                  ? null
-                  : () {
-                      final title = titleController.text.trim();
-                      if (title.isNotEmpty) {
-                        controller.createTodo(
-                          Todo(
-                            userId: 1,
-                            id: 0, // Server handles ID
-                            title: title,
-                            isCompleted: false,
-                          ),
-                        );
+            Obx(() {
+              final isSaving = controller.isSaving.value;
+              final isEmpty = titleController.text.trim().isEmpty;
+
+              return ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  minimumSize: const Size.fromHeight(45),
+                ),
+                icon: const Icon(Icons.save),
+                label: Text(isSaving ? 'Saving...' : 'Create Todo'),
+                onPressed: isSaving || isEmpty
+                    ? null
+                    : () {
+                        controller.textController.text =
+                            titleController.text.trim();
+                        controller.createTodoFromText();
+                        titleController.clear();
                         Get.back();
-                      } else {
-                        Get.snackbar('Error', 'Please enter a title');
-                      }
-                    },
-            )),
+                      },
+              );
+            }),
           ],
         ),
       ),

@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:to_do_app/createtodo.dart';
-import 'package:to_do_app/home.dart';
+import 'home.dart';
+import 'createtodo.dart';
 
 class AppRoutes {
   static const String home = '/';

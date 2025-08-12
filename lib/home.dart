@@ -1,64 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:to_do_app/controller.dart';
-import 'package:to_do_app/model.dart'; // Make sure this includes the Todo model
+import 'todo_controller.dart'; // Import the controller
 
 class TodoHome extends StatelessWidget {
-  final TodoController controller = Get.put(TodoController());
+  final TodoController controller = Get.put(TodoController(), permanent: true);
 
   TodoHome({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text("Todo List"),
         actions: [
-          // "Saving..." indicator
-          if (controller.isSaving.value)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  'Saving...',
-                  style: Get.textTheme.labelLarge?.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
           IconButton(
             icon: const Icon(Icons.brightness_6),
             onPressed: () {
-              Get.isDarkMode
-                  ? Get.changeThemeMode(ThemeMode.light)
-                  : Get.changeThemeMode(ThemeMode.dark);
+              Get.changeThemeMode(
+                Get.isDarkMode ? ThemeMode.light : ThemeMode.dark,
+              );
             },
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      body: Column(
+        children: [
+          // Input + Add Button
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller.textController,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter a new todo',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Obx(
+                  () => ElevatedButton(
+                    onPressed: controller.isSaving.value
+                        ? null
+                        : controller.createTodoFromText,
+                    child: controller.isSaving.value
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Add'),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-        return controller.todoList.isEmpty
-            ? const Center(child: Text("No Todos yet"))
-            : ListView.builder(
+          // Todo List
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (controller.todoList.isEmpty) {
+                return const Center(child: Text('No todos yet.'));
+              }
+              return ListView.builder(
                 itemCount: controller.todoList.length,
                 itemBuilder: (context, index) {
                   final todo = controller.todoList[index];
                   return Card(
-                    color: Theme.of(context).cardColor,
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    elevation: 2,
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     child: ListTile(
-                      leading: Icon(
-                        todo.isCompleted
-                            ? Icons.check_circle_outlined
-                            : Icons.circle_outlined,
-                        color: todo.isCompleted ? Colors.teal : Colors.grey,
+                      leading: Checkbox(
+                        value: todo.isCompleted,
+                        onChanged: (_) => controller.updateTodoStatus(todo),
                       ),
                       title: Text(
                         todo.title,
@@ -68,54 +87,31 @@ class TodoHome extends StatelessWidget {
                               : TextDecoration.none,
                         ),
                       ),
+                      subtitle: Text(
+                        todo.isCompleted ? 'Completed' : 'Pending',
+                        style: TextStyle(
+                          color: todo.isCompleted
+                              ? Colors.green
+                              : Colors.redAccent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_forever),
-                        color: Colors.tealAccent,
-                        onPressed: () => controller.deleteTodo(todo.id),
+                        onPressed: () {
+                          if (todo.id != null) {
+                            controller.deleteTodo(todo.id!);
+                          }
+                        },
                       ),
-                      onTap: () {
-                        // 🔁 Replace copyWith with manual object creation
-                        final updatedTodo = Todo(
-                          id: todo.id,
-                          title: todo.title,
-                          isCompleted: !todo.isCompleted, userId: todo.userId,
-                        );
-                        controller.updateTodoStatus(updatedTodo);
-                      },
                     ),
                   );
                 },
               );
-      }),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.teal,
-        onPressed: () => Get.defaultDialog(
-          titlePadding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          contentPadding: const EdgeInsets.all(16),
-          title: 'Add Todo',
-          content: TextField(
-            controller: controller.textController,
-            decoration: const InputDecoration(
-              labelText: 'Todo',
-              border: OutlineInputBorder(),
-            ),
+            }),
           ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Get.back(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                controller.createTodoFromText(); // ✅ replaces controller.textController.text
-                Get.back();
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        ),
-        child: const Icon(Icons.add),
+        ],
       ),
-    ));
+    );
   }
 }
