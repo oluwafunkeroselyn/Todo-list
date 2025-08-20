@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'todo_controller.dart'; // Import the controller
+import 'todo_controller.dart';
 
 class TodoHome extends StatelessWidget {
   final TodoController controller = Get.put(TodoController(), permanent: true);
@@ -14,6 +14,10 @@ class TodoHome extends StatelessWidget {
         title: const Text("Todo List"),
         actions: [
           IconButton(
+            icon: const Icon(Icons.delete_sweep),
+            onPressed: controller.clearAllTodos,
+          ),
+          IconButton(
             icon: const Icon(Icons.brightness_6),
             onPressed: () {
               Get.changeThemeMode(
@@ -25,7 +29,6 @@ class TodoHome extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Input + Add Button
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -57,8 +60,6 @@ class TodoHome extends StatelessWidget {
               ],
             ),
           ),
-
-          // Todo List
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
@@ -72,8 +73,8 @@ class TodoHome extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final todo = controller.todoList[index];
                   return Card(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
                     child: ListTile(
                       leading: Checkbox(
                         value: todo.isCompleted,

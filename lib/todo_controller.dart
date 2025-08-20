@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'api_services.dart';
 import 'model.dart';
 
 class TodoController extends GetxController {
   final ApiServices api = ApiServices();
+  final box = GetStorage();
 
   var todoList = <Todo>[].obs;
   var isLoading = false.obs;
@@ -14,7 +16,21 @@ class TodoController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    loadFromLocal();
     fetchTodos();
+  }
+
+  void loadFromLocal() {
+    final stored = box.read<List>('todos');
+    if (stored != null) {
+      todoList.assignAll(
+        stored.map((e) => Todo.fromJson(Map<String, dynamic>.from(e))).toList(),
+      );
+    }
+  }
+
+  void saveToLocal() {
+    box.write('todos', todoList.map((t) => t.toJson()).toList());
   }
 
   Future<void> fetchTodos() async {
@@ -22,9 +38,13 @@ class TodoController extends GetxController {
       isLoading.value = true;
       final list = await api.fetchTodos(limit: 10);
       todoList.assignAll(list);
+      saveToLocal();
     } catch (e) {
-      Get.snackbar('Error', e.toString(),
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Offline Mode',
+        'Loaded from local storage',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -36,23 +56,19 @@ class TodoController extends GetxController {
 
     isSaving.value = true;
     try {
-      // Create new Todo object locally
-      final newTodo = Todo(
-        title: title,
-        isCompleted: false,
-        userId: 1,
-      );
-
-      // Send to API
+      final newTodo = Todo(title: title, isCompleted: false, userId: 1);
       final created = await api.createTodo(newTodo);
-
-      // API will return an ID (JSONPlaceholder returns id = 201+), so we just insert
       todoList.insert(0, created.copyWith(title: title));
-
+      saveToLocal();
       textController.clear();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to create todo: $e',
-          snackPosition: SnackPosition.BOTTOM);
+      todoList.insert(0, Todo(title: title, isCompleted: false, userId: 1));
+      saveToLocal();
+      Get.snackbar(
+        'Offline Mode',
+        'Todo saved locally',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isSaving.value = false;
     }
@@ -63,35 +79,40 @@ class TodoController extends GetxController {
       final idx = todoList.indexWhere((t) => t.id == todo.id);
       if (idx == -1) return;
 
-      // Keep the same title but toggle the status locally
       final updatedLocal = todo.copyWith(isCompleted: !todo.isCompleted);
       todoList[idx] = updatedLocal;
+      saveToLocal();
 
-      // Update status on the API
-      final updatedFromApi = await api.updateTodoStatusOnly(
+      await api.updateTodoStatusOnly(
         updatedLocal.id ?? 1,
         updatedLocal.isCompleted,
       );
-
-      // Merge API's returned data with the original title
-      todoList[idx] = updatedFromApi.copyWith(title: updatedLocal.title);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update todo: $e',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Offline Mode',
+        'Change saved locally',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
   Future<void> deleteTodo(int id) async {
     try {
-      // Remove locally
       todoList.removeWhere((t) => t.id == id);
-
-      // Delete from API
+      saveToLocal();
       await api.deleteTodo(id);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete todo: $e',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Offline Mode',
+        'Todo removed locally',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
+  }
+
+  void clearAllTodos() {
+    todoList.clear();
+    saveToLocal();
   }
 
   @override

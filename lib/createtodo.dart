@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:to_do_app/todo_controller.dart';
+import 'todo_controller.dart';
 
 class CreateTodo extends StatelessWidget {
   final TextEditingController titleController = TextEditingController();

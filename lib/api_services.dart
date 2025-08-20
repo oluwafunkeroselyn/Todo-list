@@ -23,7 +23,6 @@ class ApiServices {
     );
 
     if (response.statusCode == 201) {
-      // API returns dummy data, so we just use our original todo
       final data = jsonDecode(response.body);
       return todo.copyWith(id: data['id'] ?? todo.id);
     } else {
@@ -39,10 +38,9 @@ class ApiServices {
     );
 
     if (response.statusCode == 200) {
-      // Keep title unchanged, only update completion status
       return Todo(
         id: id,
-        title: '', // We'll replace it in controller
+        title: '',
         isCompleted: isCompleted,
         userId: 1,
       );
